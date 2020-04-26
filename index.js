@@ -3,7 +3,7 @@ const app = express()
 
 const PORT = 3001
 
-const persons = [
+let persons = [
     {
         "name": "Arto Hellas",
         "number": "040-123456",
@@ -26,10 +26,36 @@ const persons = [
     }
 ]
 
+const generateId = () => {
+    return Math.floor(Math.random() * Math.floor(Math.random() * Date.now()))
+}
+
 app.use(express.json())
 
 app.get('/api/persons', (req, res) => {
     res.json(persons)
+})
+
+app.post('/api/persons', (req, res) => {
+    const body = req.body
+
+    if (!body.name || !body.number) {
+        return res.status(400).json({ error: 'Missing name or number' })
+    }
+
+    if (persons.some(p => p.name === body.name)) {
+        return res.status(400).json({ error: `${body.name} already exists` })
+    }
+
+    const person = {
+        name: body.name,
+        number: body.number,
+        id: generateId()
+    }
+
+    persons = persons.concat(person)
+
+    res.json(person)
 })
 
 app.get('/api/persons/:id', (req, res) => {
@@ -40,6 +66,12 @@ app.get('/api/persons/:id', (req, res) => {
     }
 
     res.json(person)
+})
+
+app.delete('/api/persons/:id', (req, res) => {
+    persons = persons.filter(p => p.id !== Number(req.params.id))
+
+    res.status(204).end()
 })
 
 app.get('/info', (req, res) => {
